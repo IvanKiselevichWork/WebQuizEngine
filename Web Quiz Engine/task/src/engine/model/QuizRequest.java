@@ -1,20 +1,19 @@
 package engine.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.List;
 
 @AllArgsConstructor
-@Setter
+@NoArgsConstructor
 @Getter
-public class Quiz {
-    private Long id;
+@Setter
+public class QuizRequest {
     private String title;
     private String text;
     private List<String> options;
-    @JsonIgnore
     private int answerIndex;
 }

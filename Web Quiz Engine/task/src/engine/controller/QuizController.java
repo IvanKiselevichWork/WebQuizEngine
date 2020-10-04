@@ -1,13 +1,18 @@
 package engine.controller;
 
 import engine.model.Quiz;
+import engine.model.QuizRequest;
 import engine.service.QuizService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api")
@@ -20,22 +25,47 @@ public class QuizController {
         this.quizService = quizService;
     }
 
-    @GetMapping("/quiz")
-    public Quiz getQuiz() {
-        return quizService.getQuiz();
+    @GetMapping("/quizzes/{id}")
+    public Quiz getQuiz(@PathVariable Long id) {
+        Optional<Quiz> optionalQuiz = quizService.getQuizById(id);
+        if (optionalQuiz.isPresent()) {
+            return optionalQuiz.get();
+        } else {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
     }
 
-    @PostMapping("/quiz")
-    public ResponseEntity<?> solveQuiz(@RequestParam(name = "answer") int answerIndex) {
-        Map<Object, Object> response = new HashMap<>();
-        if (quizService.getQuiz().getAnswerIndex() == answerIndex) {
-            response.put("success", true);
-            response.put("feedback", "Congratulations, you're right!");
+    @GetMapping("/quizzes")
+    public List<Quiz> getAllQuizzes() {
+        return quizService.getAllQuizzes();
+    }
+
+    @PostMapping("/quizzes/{id}/solve")
+    public ResponseEntity<?> solveQuiz(@RequestParam(name = "answer") int answerIndex, @PathVariable Long id) {
+        Optional<Quiz> optionalQuiz = quizService.getQuizById(id);
+        if (optionalQuiz.isPresent()) {
+            Map<Object, Object> response = new HashMap<>();
+            if (optionalQuiz.get().getAnswerIndex() == answerIndex) {
+                response.put("success", true);
+                response.put("feedback", "Congratulations, you're right!");
+            } else {
+                response.put("success", false);
+                response.put("feedback", "Wrong answer! Please, try again.");
+            }
+            response.put("debug1", optionalQuiz.get());
+            response.put("debug2", quizService.getAllQuizzes());
+            response.put("debug3", answerIndex);
+            response.put("debug4", optionalQuiz.get().getAnswerIndex());
+            response.put("debug5", id);
             return ResponseEntity.ok(response);
         } else {
-            response.put("success", false);
-            response.put("feedback", "Wrong answer! Please, try again.");
-            return ResponseEntity.ok(response);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
+
+    }
+
+    @PostMapping(value = "/quizzes", consumes = "application/json")
+    public Quiz addQuiz(@RequestBody QuizRequest quizRequest) {
+        return quizService.addQuiz(quizRequest);
     }
 }

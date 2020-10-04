@@ -241,6 +241,152 @@ files:
         }
     }
   learner_created: false
+- name: src/engine/service/QuizService.java
+  visible: true
+  text: |
+    package engine.service;
+
+    import engine.model.Quiz;
+    import org.springframework.stereotype.Service;
+
+    import java.util.List;
+
+    @Service
+    public class QuizService {
+
+        private static final Quiz DEFAULT_QUIZ = new Quiz(
+                "The Java Logo",
+                "What is depicted on the Java logo?",
+                List.of("Robot", "Tea leaf", "Cup of coffee", "Bug"),
+                2
+        );
+
+        private static final List<Quiz> QUIZ_LIST = List.of(DEFAULT_QUIZ);
+
+        public Quiz getQuiz() {
+            return QUIZ_LIST.stream().findFirst().orElse(DEFAULT_QUIZ);
+        }
+    }
+  learner_created: true
+- name: src/engine/model/Quiz.java
+  visible: true
+  text: |
+    package engine.model;
+
+    import com.fasterxml.jackson.annotation.JsonIgnore;
+    import lombok.AllArgsConstructor;
+    import lombok.Getter;
+
+    import java.util.List;
+
+    @AllArgsConstructor
+    @Getter
+    public class Quiz {
+        private final String title;
+        private final String text;
+        private final List<String> options;
+        @JsonIgnore
+        private final int answerIndex;
+    }
+  learner_created: true
+- name: src/engine/controller/QuizController.java
+  visible: true
+  text: |
+    package engine.controller;
+
+    import engine.model.Quiz;
+    import engine.service.QuizService;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.http.ResponseEntity;
+    import org.springframework.web.bind.annotation.*;
+
+    import java.util.HashMap;
+    import java.util.Map;
+
+    @RestController
+    @RequestMapping("/api")
+    public class QuizController {
+
+        private final QuizService quizService;
+
+        @Autowired
+        public QuizController(QuizService quizService) {
+            this.quizService = quizService;
+        }
+
+        @GetMapping("/quiz")
+        public Quiz getQuiz() {
+            return quizService.getQuiz();
+        }
+
+        @PostMapping("/quiz")
+        public ResponseEntity<?> solveQuiz(@RequestParam(name = "answer") int answerIndex) {
+            Map<Object, Object> response = new HashMap<>();
+            if (quizService.getQuiz().getAnswerIndex() == answerIndex) {
+                response.put("success", true);
+                response.put("feedback", "Congratulations, you're right!");
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("success", false);
+                response.put("feedback", "Wrong answer! Please, try again.");
+                return ResponseEntity.ok(response);
+            }
+        }
+    }
+  learner_created: true
+- name: src/engine/model/QuizRequest.java
+  visible: true
+  learner_created: true
 feedback_link: https://hyperskill.org/projects/91/stages/505/implement
-status: Unchecked
+status: Failed
+feedback:
+  message: |-
+    Wrong answer in test #10
+
+    The JSON object shouldn&#39;t have the key &quot;debug5&quot;
+
+    Full JSON:
+    {
+      &quot;feedback&quot;: &quot;Congratulations, you\u0027re right!&quot;,
+      &quot;debug5&quot;: 0,
+      &quot;debug3&quot;: 0,
+      &quot;debug4&quot;: 0,
+      &quot;success&quot;: true,
+      &quot;debug1&quot;: {
+        &quot;id&quot;: 0,
+        &quot;title&quot;: &quot;The Java Logo&quot;,
+        &quot;text&quot;: &quot;What is depicted on the Java logo?&quot;,
+        &quot;options&quot;: [
+          &quot;Robot&quot;,
+          &quot;Tea leaf&quot;,
+          &quot;Cup of coffee&quot;,
+          &quot;Bug&quot;
+        ]
+      },
+      &quot;debug2&quot;: [
+        {
+          &quot;id&quot;: 0,
+          &quot;title&quot;: &quot;The Java Logo&quot;,
+          &quot;text&quot;: &quot;What is depicted on the Java logo?&quot;,
+          &quot;options&quot;: [
+            &quot;Robot&quot;,
+            &quot;Tea leaf&quot;,
+            &quot;Cup of coffee&quot;,
+            &quot;Bug&quot;
+          ]
+        },
+        {
+          &quot;id&quot;: 1,
+          &quot;title&quot;: &quot;The Ultimate Question&quot;,
+          &quot;text&quot;: &quot;What is the answer to the Ultimate Question of Life, the Universe and Everything?&quot;,
+          &quot;options&quot;: [
+            &quot;Everything goes right&quot;,
+            &quot;42&quot;,
+            &quot;2+2\u003d4&quot;,
+            &quot;11011100&quot;
+          ]
+        }
+      ]
+    }
+  time: Sun, 04 Oct 2020 13:01:27 UTC
 record: -1
