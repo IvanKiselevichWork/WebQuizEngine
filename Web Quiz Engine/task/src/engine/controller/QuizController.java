@@ -2,6 +2,7 @@ package engine.controller;
 
 import engine.model.Quiz;
 import engine.model.QuizRequest;
+import engine.model.SolveRequest;
 import engine.service.QuizService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -9,10 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import javax.validation.Valid;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api")
@@ -41,11 +40,11 @@ public class QuizController {
     }
 
     @PostMapping("/quizzes/{id}/solve")
-    public ResponseEntity<?> solveQuiz(@RequestParam(name = "answer") int answerIndex, @PathVariable Long id) {
+    public ResponseEntity<?> solveQuiz(@RequestBody @Valid SolveRequest solveRequest, @PathVariable Long id) {
         Optional<Quiz> optionalQuiz = quizService.getQuizById(id);
         if (optionalQuiz.isPresent()) {
             Map<Object, Object> response = new HashMap<>();
-            if (optionalQuiz.get().getAnswerIndex() == answerIndex) {
+            if (optionalQuiz.get().getAnswer().equals(solveRequest.getAnswer()) ) {
                 response.put("success", true);
                 response.put("feedback", "Congratulations, you're right!");
             } else {
@@ -60,7 +59,7 @@ public class QuizController {
     }
 
     @PostMapping(value = "/quizzes", consumes = "application/json")
-    public Quiz addQuiz(@RequestBody QuizRequest quizRequest) {
+    public Quiz addQuiz(@RequestBody @Valid QuizRequest quizRequest) {
         return quizService.addQuiz(quizRequest);
     }
 }

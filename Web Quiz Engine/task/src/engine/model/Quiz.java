@@ -16,5 +16,5 @@ public class Quiz {
     private String text;
     private List<String> options;
     @JsonIgnore
-    private int answerIndex;
+    private List<Integer> answer;
 }

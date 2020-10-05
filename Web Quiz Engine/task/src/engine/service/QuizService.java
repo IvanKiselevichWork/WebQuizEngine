@@ -16,7 +16,7 @@ public class QuizService {
             "The Java Logo",
             "What is depicted on the Java logo?",
             List.of("Robot", "Tea leaf", "Cup of coffee", "Bug"),
-            2
+            List.of(2)
     );
 
     private static final Quiz DEFAULT_QUIZ_2 = new Quiz(
@@ -24,7 +24,7 @@ public class QuizService {
             "The Ultimate Question",
             "What is the answer to the Ultimate Question of Life, the Universe and Everything?",
             List.of("Everything goes right", "42", "2+2=4", "11011100"),
-            1
+            List.of(1)
     );
 
     private final List<Quiz> quizzes = new ArrayList<>();
@@ -39,6 +39,9 @@ public class QuizService {
 
     public Quiz addQuiz(QuizRequest quizRequest) {
         Long newQuizId = quizzes.stream().mapToLong(Quiz::getId).max().orElse(-1L) + 1L;
+        if (quizRequest.getAnswer() == null) {
+            quizRequest.setAnswer(new ArrayList<>());
+        }
         Quiz quiz = new Quiz(
                 newQuizId,
                 quizRequest.getTitle(),
