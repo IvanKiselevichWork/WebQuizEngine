@@ -12,6 +12,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
@@ -44,7 +45,10 @@ public class QuizController {
         Optional<Quiz> optionalQuiz = quizService.getQuizById(id);
         if (optionalQuiz.isPresent()) {
             Map<Object, Object> response = new HashMap<>();
-            if (optionalQuiz.get().getAnswer().equals(solveRequest.getAnswer()) ) {
+            boolean isRequestAnswerRight =
+                    Arrays.stream(optionalQuiz.get().getAnswers()).collect(Collectors.toList())
+                    .equals(solveRequest.getAnswer());
+            if (isRequestAnswerRight) {
                 response.put("success", true);
                 response.put("feedback", "Congratulations, you're right!");
             } else {

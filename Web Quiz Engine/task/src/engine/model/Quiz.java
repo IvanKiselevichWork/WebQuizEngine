@@ -3,18 +3,23 @@ package engine.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.List;
+import javax.persistence.*;
 
 @AllArgsConstructor
+@NoArgsConstructor
 @Setter
 @Getter
+@Entity
 public class Quiz {
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     private String title;
     private String text;
-    private List<String> options;
+    private String[] options;
     @JsonIgnore
-    private List<Integer> answer;
+    private Integer[] answers;
 }
