@@ -15,5 +15,5 @@ public class QuizRequest {
     private String title;
     private String text;
     private List<String> options;
-    private int answerIndex;
+    private int answer;
 }

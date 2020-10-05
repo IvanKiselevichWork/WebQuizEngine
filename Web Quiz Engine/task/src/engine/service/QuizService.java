@@ -39,7 +39,12 @@ public class QuizService {
 
     public Quiz addQuiz(QuizRequest quizRequest) {
         Long newQuizId = quizzes.stream().mapToLong(Quiz::getId).max().orElse(-1L) + 1L;
-        Quiz quiz = new Quiz(newQuizId, quizRequest.getTitle(), quizRequest.getText(), quizRequest.getOptions(), quizRequest.getAnswerIndex());
+        Quiz quiz = new Quiz(
+                newQuizId,
+                quizRequest.getTitle(),
+                quizRequest.getText(),
+                quizRequest.getOptions(),
+                quizRequest.getAnswer());
         quizzes.add(quiz);
         return quiz;
     }

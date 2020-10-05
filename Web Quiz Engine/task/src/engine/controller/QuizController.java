@@ -52,11 +52,6 @@ public class QuizController {
                 response.put("success", false);
                 response.put("feedback", "Wrong answer! Please, try again.");
             }
-            response.put("debug1", optionalQuiz.get());
-            response.put("debug2", quizService.getAllQuizzes());
-            response.put("debug3", answerIndex);
-            response.put("debug4", optionalQuiz.get().getAnswerIndex());
-            response.put("debug5", id);
             return ResponseEntity.ok(response);
         } else {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);

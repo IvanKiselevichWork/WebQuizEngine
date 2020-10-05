@@ -338,55 +338,9 @@ files:
   visible: true
   learner_created: true
 feedback_link: https://hyperskill.org/projects/91/stages/505/implement
-status: Failed
+status: Solved
 feedback:
-  message: |-
-    Wrong answer in test #10
-
-    The JSON object shouldn&#39;t have the key &quot;debug5&quot;
-
-    Full JSON:
-    {
-      &quot;feedback&quot;: &quot;Congratulations, you\u0027re right!&quot;,
-      &quot;debug5&quot;: 0,
-      &quot;debug3&quot;: 0,
-      &quot;debug4&quot;: 0,
-      &quot;success&quot;: true,
-      &quot;debug1&quot;: {
-        &quot;id&quot;: 0,
-        &quot;title&quot;: &quot;The Java Logo&quot;,
-        &quot;text&quot;: &quot;What is depicted on the Java logo?&quot;,
-        &quot;options&quot;: [
-          &quot;Robot&quot;,
-          &quot;Tea leaf&quot;,
-          &quot;Cup of coffee&quot;,
-          &quot;Bug&quot;
-        ]
-      },
-      &quot;debug2&quot;: [
-        {
-          &quot;id&quot;: 0,
-          &quot;title&quot;: &quot;The Java Logo&quot;,
-          &quot;text&quot;: &quot;What is depicted on the Java logo?&quot;,
-          &quot;options&quot;: [
-            &quot;Robot&quot;,
-            &quot;Tea leaf&quot;,
-            &quot;Cup of coffee&quot;,
-            &quot;Bug&quot;
-          ]
-        },
-        {
-          &quot;id&quot;: 1,
-          &quot;title&quot;: &quot;The Ultimate Question&quot;,
-          &quot;text&quot;: &quot;What is the answer to the Ultimate Question of Life, the Universe and Everything?&quot;,
-          &quot;options&quot;: [
-            &quot;Everything goes right&quot;,
-            &quot;42&quot;,
-            &quot;2+2\u003d4&quot;,
-            &quot;11011100&quot;
-          ]
-        }
-      ]
-    }
-  time: Sun, 04 Oct 2020 13:01:27 UTC
+  message: Congratulations! Continue on <a href="https://hyperskill.org/projects/91/stages/505/implement">JetBrains
+    Academy</a>
+  time: Mon, 05 Oct 2020 10:05:06 UTC
 record: -1
