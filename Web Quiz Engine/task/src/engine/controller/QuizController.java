@@ -7,6 +7,7 @@ import engine.service.QuizService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -63,7 +64,18 @@ public class QuizController {
     }
 
     @PostMapping(value = "/quizzes", consumes = "application/json")
-    public Quiz addQuiz(@RequestBody @Valid QuizRequest quizRequest) {
-        return quizService.addQuiz(quizRequest);
+    public Quiz addQuiz(@RequestBody @Valid QuizRequest quizRequest, Authentication authentication) {
+        return quizService.addQuiz(quizRequest, authentication.getName());
+    }
+
+    @DeleteMapping(value = "/quizzes/{id}")
+    public ResponseEntity<?> deleteQuiz(@PathVariable Long id, Authentication authentication) {
+        quizService.deleteQuiz(id, authentication.getName());
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PutMapping(value = "/quizzes/{id}")
+    public Quiz updateQuiz(@PathVariable Long id, Authentication authentication, @RequestBody @Valid QuizRequest quizRequest) {
+        return quizService.updateQuiz(id, authentication.getName(), quizRequest);
     }
 }

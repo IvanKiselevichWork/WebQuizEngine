@@ -18,7 +18,7 @@ stages:
   is_completed: true
 - id: 508
   step: 8256
-  is_completed: false
+  is_completed: true
 - id: 509
   step: 8257
   is_completed: false
@@ -61,7 +61,7 @@ topics:
   - title: Postman
     theory_id: 8512
   - title: IDE
-    theory_id: 3805
+    theory_id: 10996
   - title: Introduction to Spring Boot
     theory_id: 7944
   - title: What is an exception

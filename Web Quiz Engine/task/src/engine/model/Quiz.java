@@ -22,4 +22,8 @@ public class Quiz {
     private String[] options;
     @JsonIgnore
     private Integer[] answers;
+    @JsonIgnore
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 }
