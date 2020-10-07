@@ -2,9 +2,11 @@ package engine.controller;
 
 import engine.model.Quiz;
 import engine.model.QuizRequest;
+import engine.model.SolutionProjection;
 import engine.model.SolveRequest;
 import engine.service.QuizService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -37,12 +39,23 @@ public class QuizController {
     }
 
     @GetMapping("/quizzes")
-    public List<Quiz> getAllQuizzes() {
-        return quizService.getAllQuizzes();
+    public Page<Quiz> getAllQuizzes(@RequestParam(name = "page", required = false) Integer page) {
+        if (page == null) {
+            page = 0;
+        }
+        return quizService.getAllQuizzes(page);
+    }
+
+    @GetMapping("/quizzes/completed")
+    public Page<SolutionProjection> getCompletedQuizzes(@RequestParam(name = "page", required = false) Integer page ,Authentication authentication) {
+        if (page == null) {
+            page = 0;
+        }
+        return quizService.getCompletedQuizzes(authentication.getName(), page);
     }
 
     @PostMapping("/quizzes/{id}/solve")
-    public ResponseEntity<?> solveQuiz(@RequestBody @Valid SolveRequest solveRequest, @PathVariable Long id) {
+    public ResponseEntity<?> solveQuiz(@RequestBody @Valid SolveRequest solveRequest, @PathVariable Long id, Authentication authentication) {
         Optional<Quiz> optionalQuiz = quizService.getQuizById(id);
         if (optionalQuiz.isPresent()) {
             Map<Object, Object> response = new HashMap<>();
@@ -50,6 +63,7 @@ public class QuizController {
                     Arrays.stream(optionalQuiz.get().getAnswers()).collect(Collectors.toList())
                     .equals(solveRequest.getAnswer());
             if (isRequestAnswerRight) {
+                quizService.addSolution(authentication.getName(), id);
                 response.put("success", true);
                 response.put("feedback", "Congratulations, you're right!");
             } else {

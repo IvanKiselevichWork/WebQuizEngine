@@ -1,18 +1,12 @@
 package engine.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import javax.persistence.*;
 import java.util.List;
 
 @Entity
-@AllArgsConstructor
-@NoArgsConstructor
-@Getter
-@Setter
+@Data
 public class User {
 
     @Id
@@ -20,6 +14,8 @@ public class User {
     private Long id;
     private String email;
     private String password;
-//    @OneToMany(mappedBy = "user")
-//    private List<Quiz> quizzes;
+    @OneToMany(mappedBy = "user")
+    private List<Quiz> quizzes;
+    @OneToMany(mappedBy = "user")
+    private List<Solution> solutions;
 }

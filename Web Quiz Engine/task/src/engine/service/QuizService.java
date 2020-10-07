@@ -1,35 +1,45 @@
 package engine.service;
 
-import engine.model.Quiz;
-import engine.model.QuizRequest;
-import engine.model.User;
+import engine.model.*;
 import engine.repository.QuizRepository;
+import engine.repository.SolutionRepository;
 import engine.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 @Service
 public class QuizService {
+    private static final int QUIZ_PER_PAGE = 10;
+    private static final int SOLUTION_PER_PAGE = 10;
 
     private final QuizRepository quizRepository;
     private final UserRepository userRepository;
+    private final SolutionRepository solutionRepository;
 
     @Autowired
-    public QuizService(QuizRepository quizRepository, UserRepository userRepository) {
+    public QuizService(QuizRepository quizRepository, UserRepository userRepository, SolutionRepository solutionRepository) {
         this.quizRepository = quizRepository;
         this.userRepository = userRepository;
+        this.solutionRepository = solutionRepository;
     }
 
-    public List<Quiz> getAllQuizzes() {
-        return quizRepository.findAll();
+    public Page<Quiz> getAllQuizzes(int page) {
+        return quizRepository.findAll(PageRequest.of(page, QUIZ_PER_PAGE));
+    }
+
+    public Page<SolutionProjection> getCompletedQuizzes(String username, Integer page) {
+        User user = userRepository.findByEmail(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        return solutionRepository.findByUserId(user.getId(), PageRequest.of(page, SOLUTION_PER_PAGE, Sort.by("completedAt").descending()));
     }
 
     public Optional<Quiz> getQuizById(Long id) {
@@ -74,5 +84,15 @@ public class QuizService {
         quiz.setOptions(options);
         quiz.setAnswers(answers);
         return quizRepository.save(quiz);
+    }
+
+    public void addSolution(String username, Long quizId) {
+        User user = userRepository.findByEmail(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        Quiz quiz = quizRepository.findById(quizId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        Solution solution = new Solution();
+        solution.setUser(user);
+        solution.setQuiz(quiz);
+        solution.setCompletedAt(LocalDateTime.now());
+        solutionRepository.save(solution);
     }
 }

@@ -5,7 +5,6 @@ import engine.model.UserRequest;
 import engine.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -32,7 +31,7 @@ public class UserService {
             user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
             return userRepository.save(user);
         } else {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "This email is already used");
         }
     }
 }

@@ -793,6 +793,614 @@ files:
         }
     }
   learner_created: false
+- name: src/engine/service/UserService.java
+  visible: true
+  text: |
+    package engine.service;
+
+    import engine.model.User;
+    import engine.model.UserRequest;
+    import engine.repository.UserRepository;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.http.HttpStatus;
+    import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+    import org.springframework.security.crypto.password.PasswordEncoder;
+    import org.springframework.stereotype.Service;
+    import org.springframework.web.server.ResponseStatusException;
+
+    import java.util.Optional;
+
+    @Service
+    public class UserService {
+
+        private final UserRepository userRepository;
+        private final PasswordEncoder passwordEncoder;
+
+        @Autowired
+        public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+            this.userRepository = userRepository;
+            this.passwordEncoder = passwordEncoder;
+        }
+
+        public User registerUser(UserRequest userRequest) {
+            Optional<User> optionalUser = userRepository.findByEmail(userRequest.getEmail());
+            if (optionalUser.isEmpty()) {
+                User user = new User();
+                user.setEmail(userRequest.getEmail());
+                user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
+                return userRepository.save(user);
+            } else {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            }
+        }
+    }
+  learner_created: true
+- name: src/engine/config/SecurityConfig.java
+  visible: true
+  text: |
+    package engine.config;
+
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.context.annotation.Bean;
+    import org.springframework.context.annotation.Configuration;
+    import org.springframework.http.HttpMethod;
+    import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+    import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+    import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+    import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+    import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+    import org.springframework.security.core.userdetails.UserDetailsService;
+    import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+    import org.springframework.security.crypto.password.PasswordEncoder;
+
+    @Configuration
+    @EnableWebSecurity
+    public class SecurityConfig extends WebSecurityConfigurerAdapter {
+
+        private final UserDetailsService userDetailsService;
+
+        @Autowired
+        public SecurityConfig(UserDetailsService userDetailsService) {
+            this.userDetailsService = userDetailsService;
+        }
+
+        @Bean
+        public PasswordEncoder passwordEncoder() {
+            return new BCryptPasswordEncoder(12);
+        }
+
+        @Bean
+        public DaoAuthenticationProvider daoAuthenticationProvider() {
+            DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
+            daoAuthenticationProvider.setPasswordEncoder(passwordEncoder());
+            daoAuthenticationProvider.setUserDetailsService(userDetailsService);
+            return daoAuthenticationProvider;
+        }
+
+        @Override
+        protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+            auth.authenticationProvider(daoAuthenticationProvider());
+        }
+
+        @Override
+        protected void configure(HttpSecurity http) throws Exception {
+            http
+                    .csrf().disable()
+                    .authorizeRequests()
+                    .antMatchers(HttpMethod.POST, "/api/register", "/actuator/shutdown")
+                    .permitAll()
+                    .antMatchers("/h2")
+                    .permitAll()
+                    .anyRequest().authenticated()
+                    .and()
+                    .httpBasic();
+        }
+    }
+  learner_created: true
+- name: src/engine/model/User.java
+  visible: true
+  text: |
+    package engine.model;
+
+    import lombok.AllArgsConstructor;
+    import lombok.Getter;
+    import lombok.NoArgsConstructor;
+    import lombok.Setter;
+
+    import javax.persistence.*;
+    import java.util.List;
+
+    @Entity
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Getter
+    @Setter
+    public class User {
+
+        @Id
+        @GeneratedValue(strategy = GenerationType.AUTO)
+        private Long id;
+        private String email;
+        private String password;
+    //    @OneToMany(mappedBy = "user")
+    //    private List<Quiz> quizzes;
+    }
+  learner_created: true
+- name: src/engine/model/QuizRequest.java
+  visible: true
+  text: |
+    package engine.model;
+
+    import lombok.AllArgsConstructor;
+    import lombok.Getter;
+    import lombok.NoArgsConstructor;
+    import lombok.Setter;
+
+    import javax.validation.constraints.NotBlank;
+    import javax.validation.constraints.NotEmpty;
+    import javax.validation.constraints.Size;
+    import java.util.List;
+
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Getter
+    @Setter
+    public class QuizRequest {
+        @NotBlank
+        private String title;
+        @NotBlank
+        private String text;
+        @NotEmpty
+        @Size(min = 2)
+        private List<String> options;
+        private List<Integer> answer;
+    }
+  learner_created: true
+- name: src/engine/model/SolveRequest.java
+  visible: true
+  text: |
+    package engine.model;
+
+    import lombok.AllArgsConstructor;
+    import lombok.Getter;
+    import lombok.NoArgsConstructor;
+    import lombok.Setter;
+
+    import javax.validation.constraints.NotNull;
+    import java.util.List;
+
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Getter
+    @Setter
+    public class SolveRequest {
+        @NotNull
+        private List<Integer> answer;
+    }
+  learner_created: true
+- name: src/engine/repository/UserRepository.java
+  visible: true
+  text: |
+    package engine.repository;
+
+    import engine.model.User;
+    import org.springframework.data.jpa.repository.JpaRepository;
+    import org.springframework.stereotype.Repository;
+
+    import java.util.Optional;
+
+    @Repository
+    public interface UserRepository extends JpaRepository<User, Long> {
+
+        Optional<User> findByEmail(String email);
+    }
+  learner_created: true
+- name: src/engine/security/SecurityUser.java
+  visible: true
+  text: |
+    package engine.security;
+
+    import engine.model.User;
+    import lombok.Data;
+    import org.springframework.security.core.GrantedAuthority;
+    import org.springframework.security.core.authority.SimpleGrantedAuthority;
+    import org.springframework.security.core.userdetails.UserDetails;
+
+    import java.util.Collection;
+    import java.util.List;
+
+    @Data
+    public class SecurityUser implements UserDetails {
+
+        private final String username;
+        private final String password;
+        private final List<SimpleGrantedAuthority> authorities;
+        private final boolean isActive;
+
+        @Override
+        public Collection<? extends GrantedAuthority> getAuthorities() {
+            return authorities;
+        }
+
+        @Override
+        public String getPassword() {
+            return password;
+        }
+
+        @Override
+        public String getUsername() {
+            return username;
+        }
+
+        @Override
+        public boolean isAccountNonExpired() {
+            return isActive;
+        }
+
+        @Override
+        public boolean isAccountNonLocked() {
+            return isActive;
+        }
+
+        @Override
+        public boolean isCredentialsNonExpired() {
+            return isActive;
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return isActive;
+        }
+
+        public static SecurityUser fromUser(User user) {
+            return new SecurityUser(
+                    user.getEmail(), user.getPassword(),
+                    List.of(new SimpleGrantedAuthority("USER")),
+                    true
+            );
+        }
+    }
+  learner_created: true
+- name: src/engine/repository/QuizRepository.java
+  visible: true
+  text: |
+    package engine.repository;
+
+    import engine.model.Quiz;
+    import org.springframework.data.jpa.repository.JpaRepository;
+    import org.springframework.stereotype.Repository;
+
+    @Repository
+    public interface QuizRepository extends JpaRepository<Quiz, Long> {
+    }
+  learner_created: true
+- name: src/engine/model/UserRequest.java
+  visible: true
+  text: |
+    package engine.model;
+
+    import lombok.AllArgsConstructor;
+    import lombok.Getter;
+    import lombok.NoArgsConstructor;
+    import lombok.Setter;
+
+    import javax.validation.constraints.Pattern;
+
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Getter
+    @Setter
+    public class UserRequest {
+
+        @Pattern(regexp = "[a-zA-Z\\d]+@[a-zA-Z\\d]+\\.[a-zA-Z]+")
+        private String email;
+        @Pattern(regexp = ".{5,}")
+        private String password;
+    }
+  learner_created: true
+- name: src/engine/config/ExceptionHandlerConfig.java
+  visible: true
+  text: |
+    package engine.config;
+
+    import org.springframework.http.HttpStatus;
+    import org.springframework.web.bind.MethodArgumentNotValidException;
+    import org.springframework.web.bind.annotation.ExceptionHandler;
+    import org.springframework.web.bind.annotation.ResponseStatus;
+    import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+    import java.util.HashMap;
+    import java.util.Map;
+
+    @RestControllerAdvice
+    public class ExceptionHandlerConfig {
+
+        @ResponseStatus(HttpStatus.BAD_REQUEST)
+        @ExceptionHandler(MethodArgumentNotValidException.class)
+        public Map<String, String> handleValidationExceptions(MethodArgumentNotValidException e) {
+            Map<String, String> response = new HashMap<>();
+            response.put("message", e.getMessage());
+            return response;
+        }
+    }
+  learner_created: true
+- name: src/engine/service/QuizService.java
+  visible: true
+  text: |
+    package engine.service;
+
+    import engine.model.Quiz;
+    import engine.model.QuizRequest;
+    import engine.model.User;
+    import engine.repository.QuizRepository;
+    import engine.repository.UserRepository;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.http.HttpStatus;
+    import org.springframework.http.ResponseEntity;
+    import org.springframework.security.core.userdetails.UsernameNotFoundException;
+    import org.springframework.stereotype.Service;
+    import org.springframework.web.server.ResponseStatusException;
+
+    import java.util.ArrayList;
+    import java.util.List;
+    import java.util.Optional;
+
+    @Service
+    public class QuizService {
+
+        private final QuizRepository quizRepository;
+        private final UserRepository userRepository;
+
+        @Autowired
+        public QuizService(QuizRepository quizRepository, UserRepository userRepository) {
+            this.quizRepository = quizRepository;
+            this.userRepository = userRepository;
+        }
+
+        public List<Quiz> getAllQuizzes() {
+            return quizRepository.findAll();
+        }
+
+        public Optional<Quiz> getQuizById(Long id) {
+            return quizRepository.findById(id);
+        }
+
+        public Quiz addQuiz(QuizRequest quizRequest, String username) {
+            if (quizRequest.getAnswer() == null) {
+                quizRequest.setAnswer(new ArrayList<>());
+            }
+            Quiz quiz = new Quiz();
+            quiz.setTitle(quizRequest.getTitle());
+            quiz.setText(quizRequest.getText());
+            String[] options = quizRequest.getOptions().toArray(String[]::new);
+            Integer[] answers = quizRequest.getAnswer().toArray(Integer[]::new);
+            quiz.setOptions(options);
+            quiz.setAnswers(answers);
+            User user = userRepository.findByEmail(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+            quiz.setUser(user);
+            return quizRepository.save(quiz);
+        }
+
+        public void deleteQuiz(Long id, String username) {
+            User user = userRepository.findByEmail(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+            Quiz quiz = quizRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+            if (!quiz.getUser().equals(user)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+            }
+            quizRepository.deleteById(id);
+        }
+
+        public Quiz updateQuiz(Long id, String username, QuizRequest quizRequest) {
+            User user = userRepository.findByEmail(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+            Quiz quiz = quizRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+            if (!quiz.getUser().equals(user)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+            }
+            quiz.setTitle(quizRequest.getTitle());
+            quiz.setText(quizRequest.getText());
+            String[] options = quizRequest.getOptions().toArray(String[]::new);
+            Integer[] answers = quizRequest.getAnswer().toArray(Integer[]::new);
+            quiz.setOptions(options);
+            quiz.setAnswers(answers);
+            return quizRepository.save(quiz);
+        }
+    }
+  learner_created: true
+- name: src/engine/controller/UserController.java
+  visible: true
+  text: |
+    package engine.controller;
+
+    import engine.model.UserRequest;
+    import engine.service.UserService;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.http.HttpStatus;
+    import org.springframework.http.ResponseEntity;
+    import org.springframework.web.bind.annotation.PostMapping;
+    import org.springframework.web.bind.annotation.RequestBody;
+    import org.springframework.web.bind.annotation.RequestMapping;
+    import org.springframework.web.bind.annotation.RestController;
+
+    import javax.validation.Valid;
+
+    @RestController
+    @RequestMapping("/api")
+    public class UserController {
+
+        private final UserService userService;
+
+        @Autowired
+        public UserController(UserService userService) {
+            this.userService = userService;
+        }
+
+        @PostMapping("/register")
+        public ResponseEntity<?> register(@Valid @RequestBody UserRequest userRequest) {
+            userService.registerUser(userRequest);
+            return new ResponseEntity<>(HttpStatus.OK);
+        }
+    }
+  learner_created: true
+- name: src/engine/security/UserDetailServiceImpl.java
+  visible: true
+  text: |
+    package engine.security;
+
+    import engine.model.User;
+    import engine.repository.UserRepository;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.security.core.userdetails.UserDetailsService;
+    import org.springframework.security.core.userdetails.UsernameNotFoundException;
+    import org.springframework.stereotype.Service;
+
+    @Service
+    public class UserDetailServiceImpl implements UserDetailsService {
+
+        private final UserRepository userRepository;
+
+        @Autowired
+        public UserDetailServiceImpl(UserRepository userRepository) {
+            this.userRepository = userRepository;
+        }
+
+        @Override
+        public SecurityUser loadUserByUsername(String email) {
+            User user = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+            return SecurityUser.fromUser(user);
+        }
+    }
+  learner_created: true
+- name: src/engine/model/Quiz.java
+  visible: true
+  text: |
+    package engine.model;
+
+    import com.fasterxml.jackson.annotation.JsonIgnore;
+    import lombok.AllArgsConstructor;
+    import lombok.Getter;
+    import lombok.NoArgsConstructor;
+    import lombok.Setter;
+
+    import javax.persistence.*;
+
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Setter
+    @Getter
+    @Entity
+    public class Quiz {
+        @Id
+        @GeneratedValue(strategy = GenerationType.AUTO)
+        private Long id;
+        private String title;
+        private String text;
+        private String[] options;
+        @JsonIgnore
+        private Integer[] answers;
+        @JsonIgnore
+        @ManyToOne
+        @JoinColumn(name = "user_id")
+        private User user;
+    }
+  learner_created: true
+- name: src/engine/controller/QuizController.java
+  visible: true
+  text: |
+    package engine.controller;
+
+    import engine.model.Quiz;
+    import engine.model.QuizRequest;
+    import engine.model.SolveRequest;
+    import engine.service.QuizService;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.http.HttpStatus;
+    import org.springframework.http.ResponseEntity;
+    import org.springframework.security.core.Authentication;
+    import org.springframework.web.bind.annotation.*;
+    import org.springframework.web.server.ResponseStatusException;
+
+    import javax.validation.Valid;
+    import java.util.*;
+    import java.util.stream.Collectors;
+
+    @RestController
+    @RequestMapping("/api")
+    public class QuizController {
+
+        private final QuizService quizService;
+
+        @Autowired
+        public QuizController(QuizService quizService) {
+            this.quizService = quizService;
+        }
+
+        @GetMapping("/quizzes/{id}")
+        public Quiz getQuiz(@PathVariable Long id) {
+            Optional<Quiz> optionalQuiz = quizService.getQuizById(id);
+            if (optionalQuiz.isPresent()) {
+                return optionalQuiz.get();
+            } else {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+            }
+        }
+
+        @GetMapping("/quizzes")
+        public List<Quiz> getAllQuizzes() {
+            return quizService.getAllQuizzes();
+        }
+
+        @PostMapping("/quizzes/{id}/solve")
+        public ResponseEntity<?> solveQuiz(@RequestBody @Valid SolveRequest solveRequest, @PathVariable Long id) {
+            Optional<Quiz> optionalQuiz = quizService.getQuizById(id);
+            if (optionalQuiz.isPresent()) {
+                Map<Object, Object> response = new HashMap<>();
+                boolean isRequestAnswerRight =
+                        Arrays.stream(optionalQuiz.get().getAnswers()).collect(Collectors.toList())
+                        .equals(solveRequest.getAnswer());
+                if (isRequestAnswerRight) {
+                    response.put("success", true);
+                    response.put("feedback", "Congratulations, you're right!");
+                } else {
+                    response.put("success", false);
+                    response.put("feedback", "Wrong answer! Please, try again.");
+                }
+                return ResponseEntity.ok(response);
+            } else {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+            }
+
+        }
+
+        @PostMapping(value = "/quizzes", consumes = "application/json")
+        public Quiz addQuiz(@RequestBody @Valid QuizRequest quizRequest, Authentication authentication) {
+            return quizService.addQuiz(quizRequest, authentication.getName());
+        }
+
+        @DeleteMapping(value = "/quizzes/{id}")
+        public ResponseEntity<?> deleteQuiz(@PathVariable Long id, Authentication authentication) {
+            quizService.deleteQuiz(id, authentication.getName());
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
+
+        @PutMapping(value = "/quizzes/{id}")
+        public Quiz updateQuiz(@PathVariable Long id, Authentication authentication, @RequestBody @Valid QuizRequest quizRequest) {
+            return quizService.updateQuiz(id, authentication.getName(), quizRequest);
+        }
+    }
+  learner_created: true
+- name: src/engine/model/Solution.java
+  visible: true
+  learner_created: true
+- name: src/engine/repository/SolutionRepository.java
+  visible: true
+  learner_created: true
+- name: src/engine/model/SolutionProjection.java
+  visible: true
+  learner_created: true
 feedback_link: https://hyperskill.org/projects/91/stages/509/implement
-status: Unchecked
+status: Solved
+feedback:
+  message: Congratulations! Continue on <a href="https://hyperskill.org/projects/91/stages/509/implement">JetBrains
+    Academy</a>
+  time: Wed, 07 Oct 2020 17:59:08 UTC
 record: -1
